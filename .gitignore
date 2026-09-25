@@ -1,0 +1,33 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Uploads
+uploads/
+*.pdf
+*.docx
+*.xlsx
+
+# Build
+dist/
+build/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
