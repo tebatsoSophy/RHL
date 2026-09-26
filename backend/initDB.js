@@ -17,30 +17,59 @@ CREATE TABLE IF NOT EXISTS mines (
 );
 
 
+CREATE TABLE IF NOT EXISTS companies (
+    id SERIAL PRIMARY KEY,
+
+    name VARCHAR(150) NOT NULL,
+
+    registration_number VARCHAR(100)
+        UNIQUE,
+
+    company_type VARCHAR(100),
+
+    created_at TIMESTAMP
+        DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
 
     name VARCHAR(150) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+
+    email VARCHAR(255)
+        UNIQUE NOT NULL,
+
     password VARCHAR(255) NOT NULL,
 
     role VARCHAR(50) NOT NULL,
 
-    company_id INTEGER REFERENCES companies(id) ON DELETE SET NULL,
-    mine_id INTEGER REFERENCES mines(id) ON DELETE CASCADE,
+    company_id INTEGER
+        REFERENCES companies(id)
+        ON DELETE SET NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    mine_id INTEGER
+        REFERENCES mines(id)
+        ON DELETE CASCADE,
+
+    created_at TIMESTAMP
+        DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT valid_role
-        CHECK (role IN ('ADMIN', 'WORKER', 'SPECIALIST', 'REGULATOR'))
-);
+        CHECK (
+            role IN (
+                'ADMIN',
+                'WORKER',
+                'SPECIALIST',
+                'REGULATOR'
+            )
+        ),
 
-CREATE TABLE IF NOT EXISTS companies (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    registration_number VARCHAR(100) UNIQUE,
-    company_type VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    CONSTRAINT admin_must_have_mine
+        CHECK (
+            (role = 'ADMIN' AND mine_id IS NOT NULL)
+            OR
+            (role <> 'ADMIN' AND mine_id IS NULL)
+        )
 );
 
 
@@ -65,6 +94,8 @@ CREATE TABLE IF NOT EXISTS rehabilitation_zones (
     created_at TIMESTAMP
         DEFAULT CURRENT_TIMESTAMP
 );
+
+
 
 
 CREATE TABLE IF NOT EXISTS rehabilitation_activities (
@@ -124,6 +155,38 @@ CREATE TABLE IF NOT EXISTS evidence (
         DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS zone_assignments (
+    id SERIAL PRIMARY KEY,
+
+    user_id INTEGER NOT NULL
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    zone_id INTEGER NOT NULL
+        REFERENCES rehabilitation_zones(id)
+        ON DELETE CASCADE,
+
+    assigned_by INTEGER
+        REFERENCES users(id)
+        ON DELETE SET NULL,
+
+    status VARCHAR(50)
+        NOT NULL DEFAULT 'ACTIVE',
+
+    assigned_at TIMESTAMP
+        DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT unique_user_zone
+        UNIQUE (user_id, zone_id),
+
+    CONSTRAINT valid_assignment_status
+        CHECK (
+            status IN (
+                'ACTIVE',
+                'REMOVED'
+            )
+        )
+);
 
 CREATE TABLE IF NOT EXISTS reviews (
     id SERIAL PRIMARY KEY,
@@ -146,44 +209,62 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 
-CREATE TABLE IF NOT EXISTS registration_requests (
+CREATE TABLE IF NOT EXISTS invitations (
     id SERIAL PRIMARY KEY,
-
-    name VARCHAR(255) NOT NULL,
 
     email VARCHAR(255) NOT NULL,
 
-    requested_role VARCHAR(50) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'WORKER',
 
-    requested_mine_id INTEGER
+    mine_id INTEGER NOT NULL
         REFERENCES mines(id)
+        ON DELETE CASCADE,
+
+    company_id INTEGER
+        REFERENCES companies(id)
         ON DELETE SET NULL,
 
-    reason TEXT,
+    zone_id INTEGER NOT NULL
+        REFERENCES rehabilitation_zones(id)
+        ON DELETE CASCADE,
+
+    invited_by INTEGER NOT NULL
+        REFERENCES users(id)
+        ON DELETE SET NULL,
+
+    invitation_token_hash VARCHAR(64)
+        UNIQUE NOT NULL,
+
+    otp_hash VARCHAR(255)
+        NOT NULL,
+
+    expires_at TIMESTAMP
+        NOT NULL,
 
     status VARCHAR(50)
         NOT NULL DEFAULT 'PENDING',
 
-    /*
-     * SHA-256 hash of the invitation token.
-     * The raw token is only sent to the applicant.
-     */
-    approval_token VARCHAR(255),
+    accepted_at TIMESTAMP,
 
-    /*
-     * bcrypt hash of the 6-digit OTP.
-     */
-    otp_hash VARCHAR(255),
-
-    /*
-     * Invitation/OTP expiration time.
-     */
-    token_expires_at TIMESTAMP,
+    accepted_user_id INTEGER
+        REFERENCES users(id)
+        ON DELETE SET NULL,
 
     created_at TIMESTAMP
         DEFAULT CURRENT_TIMESTAMP,
 
-    reviewed_at TIMESTAMP
+    CONSTRAINT valid_invitation_role
+        CHECK (role IN ('WORKER')),
+
+    CONSTRAINT valid_invitation_status
+        CHECK (
+            status IN (
+                'PENDING',
+                'ACCEPTED',
+                'EXPIRED',
+                'CANCELLED'
+            )
+        )
 );
 
 `;
@@ -412,6 +493,48 @@ WHERE NOT EXISTS (
 
 `;
 
+// ============================================================
+// SEED COMPANIES
+// ============================================================
+
+const seedCompaniesSQL = `
+
+INSERT INTO companies
+(
+    name,
+    registration_number,
+    company_type
+)
+VALUES
+
+(
+    'SkyView Aerial Surveys (Pty) Ltd',
+    '2015/123456/07',
+    'DRONE_SURVEY'
+),
+
+(
+    'AquaTest Environmental Laboratories',
+    '2012/098765/07',
+    'WATER_TESTING'
+),
+
+(
+    'Terra Soil Sciences (Pty) Ltd',
+    '2018/456789/07',
+    'SOIL_TESTING'
+),
+
+(
+    'GreenRestore Rehabilitation Contractors',
+    '2009/321654/07',
+    'REHABILITATION_CONTRACTOR'
+)
+
+ON CONFLICT (registration_number)
+DO NOTHING;
+
+`;
 
 // ============================================================
 // DATABASE INITIALIZATION
@@ -443,18 +566,7 @@ async function initializeDatabase() {
         );
 
 
-        // ----------------------------------------------------
-        // Make sure OTP column exists
-        // ----------------------------------------------------
 
-        await pool.query(`
-            ALTER TABLE registration_requests
-            ADD COLUMN IF NOT EXISTS otp_hash VARCHAR(255);
-        `);
-
-        console.log(
-            "Registration OTP field verified."
-        );
 
 
         // ----------------------------------------------------
@@ -489,6 +601,11 @@ async function initializeDatabase() {
         console.log(
             "Rehabilitation zones seeded successfully."
         );
+
+
+        console.log("Seeding companies...");
+await pool.query(seedCompaniesSQL);
+console.log("Companies seeded successfully.");
 
 
         console.log(
