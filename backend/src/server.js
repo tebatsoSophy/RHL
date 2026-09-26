@@ -6,6 +6,9 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const registrationRoutes = require("./routes/registrationRoutes");
+const invitationRoutes = require("./routes/invitationRoutes");
+const invitationCompletionRoutes =
+    require("./routes/invitationCompletionRoutes");
 
 const app = express();
 const mineRoutes = require("./routes/mineRoutes");
@@ -25,6 +28,14 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/registration-requests", registrationRoutes);
+app.use(
+    "/api/invitations",
+    invitationRoutes
+);
+app.use(
+    "/api/invitations",
+    invitationCompletionRoutes
+);
 
 const PORT = process.env.PORT || 5000;
 

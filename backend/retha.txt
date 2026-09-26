@@ -1,0 +1,21 @@
+curl -X POST http://localhost:5000/api/invitations \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ADMIN_TOKEN" \
+  -d '{
+    "name": "John Smith",
+    "email": "u23815087@tuks.co.za",
+    "role": "MINE",
+    "mineId": 1
+  }'
+
+ psql -U postgres -h localhost -p 5432 -d rehabledger
+
+  curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@rehabledger.co.za",
+    "password": "AdminPassword123!"
+  }'
+
+
+  export ADMIN_TOKEN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInJvbGUiOiJBRE1JTiIsIm1pbmVJZCI6bnVsbCwiaWF0IjoxNzkwNDQwNjU0LCJleHAiOjE3OTA0Njk0NTR9.9GeAADmeY5gD-nFWAMQc2-tCpmtsNyexs-ZZBP9oFLM'

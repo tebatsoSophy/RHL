@@ -142,6 +142,20 @@ CREATE TABLE IF NOT EXISTS reviews (
     reviewed_at TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS invitations (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    mine_id INTEGER REFERENCES mines(id) ON DELETE SET NULL,
+    invitation_token VARCHAR(64) UNIQUE NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    token_expires_at TIMESTAMP NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
+);
+
 
 CREATE TABLE IF NOT EXISTS registration_requests (
     id SERIAL PRIMARY KEY,
