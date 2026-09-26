@@ -5,20 +5,25 @@ const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
+
+
 const registrationRoutes = require("./routes/registrationRoutes");
 const invitationRoutes = require("./routes/invitationRoutes");
 const invitationCompletionRoutes =
     require("./routes/invitationCompletionRoutes");
 
 const app = express();
+const publicRoutes = require("./routes/publicRoutes");
 const mineRoutes = require("./routes/mineRoutes");
 const zoneRoutes = require("./routes/zoneRoutes");
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/public", publicRoutes);
 app.use("/api/mines", mineRoutes);
 app.use("/api/zones", zoneRoutes);
-    
+
+
 app.get("/", (req, res) => {
     res.json({
         message: "RehabLedger API is running"
@@ -27,6 +32,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+
 app.use("/api/registration-requests", registrationRoutes);
 app.use(
     "/api/invitations",
@@ -36,6 +42,7 @@ app.use(
     "/api/invitations",
     invitationCompletionRoutes
 );
+
 
 const PORT = process.env.PORT || 5000;
 

@@ -8,126 +8,100 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-const sendRegistrationInvitation = async ({
-    name,
+const sendInvitationEmail = async ({
     email,
     invitationLink,
-    otp
+    otp,
+    mineName,
+    zoneName
 }) => {
+
     const mailOptions = {
         from: `"RehabLedger" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: "Your RehabLedger registration has been approved",
+        subject: "You've been invited to RehabLedger",
 
         html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>RehabLedger Registration</title>
-            </head>
+        <!DOCTYPE html>
+        <html>
+        <body style="
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 30px;
+        ">
 
-            <body style="
-                margin: 0;
-                padding: 0;
-                background-color: #f4f4f4;
-                font-family: Arial, sans-serif;
+            <div style="
+                max-width: 600px;
+                margin: auto;
+                background: white;
+                padding: 35px;
+                border-radius: 10px;
             ">
 
-                <div style="
-                    max-width: 600px;
-                    margin: 40px auto;
-                    background: white;
-                    padding: 40px;
-                    border-radius: 10px;
-                ">
+                <h1>RehabLedger Invitation</h1>
 
-                    <h1 style="color: #1f2937;">
-                        Welcome to RehabLedger
-                    </h1>
+                <p>
+                    You have been invited to participate in
+                    rehabilitation activities for:
+                </p>
 
-                    <p>
-                        Hello ${name},
-                    </p>
+                <p>
+                    <strong>Mine:</strong> ${mineName}<br>
+                    <strong>Zone:</strong> ${zoneName}
+                </p>
 
-                    <p>
-                        Your registration request for RehabLedger
-                        has been approved.
-                    </p>
+                <p>
+                    Click the button below to create your
+                    RehabLedger account.
+                </p>
 
-                    <p>
-                        Click the button below to complete your
-                        registration and create your password.
-                    </p>
+                <div style="text-align:center; margin:30px 0;">
 
-                    <div style="
-                        text-align: center;
-                        margin: 30px 0;
-                    ">
-
-                        <a
-                            href="${invitationLink}"
-                            style="
-                                display: inline-block;
-                                background-color: #166534;
-                                color: white;
-                                padding: 14px 24px;
-                                text-decoration: none;
-                                border-radius: 6px;
-                                font-weight: bold;
-                            "
-                        >
-                            Complete Registration
-                        </a>
-
-                    </div>
-
-                    <p>
-                        Your verification code is:
-                    </p>
-
-                    <div style="
-                        background-color: #f3f4f6;
-                        padding: 20px;
-                        text-align: center;
-                        font-size: 28px;
-                        font-weight: bold;
-                        letter-spacing: 6px;
-                        border-radius: 6px;
-                    ">
-                        ${otp}
-                    </div>
-
-                    <p style="
-                        margin-top: 25px;
-                        color: #555;
-                    ">
-                        This invitation and verification code
-                        expire in 24 hours.
-                    </p>
-
-                    <p style="color: #555;">
-                        If you did not request access to RehabLedger,
-                        you can ignore this email.
-                    </p>
-
-                    <hr style="
-                        border: none;
-                        border-top: 1px solid #ddd;
-                        margin: 30px 0;
-                    ">
-
-                    <p style="
-                        font-size: 12px;
-                        color: #777;
-                    ">
-                        RehabLedger
-                    </p>
+                    <a
+                        href="${invitationLink}"
+                        style="
+                            background:#166534;
+                            color:white;
+                            padding:14px 24px;
+                            text-decoration:none;
+                            border-radius:6px;
+                        "
+                    >
+                        Accept Invitation
+                    </a>
 
                 </div>
 
-            </body>
-            </html>
+                <p>Your verification OTP is:</p>
+
+                <div style="
+                    background:#f3f4f6;
+                    padding:20px;
+                    text-align:center;
+                    font-size:28px;
+                    font-weight:bold;
+                    letter-spacing:6px;
+                ">
+                    ${otp}
+                </div>
+
+                <p>
+                    This invitation expires in 24 hours.
+                </p>
+
+                <p>
+                    You will be asked to provide your name,
+                    create a password and enter the OTP.
+                </p>
+
+                <p>
+                    RehabLedger
+                </p>
+
+            </div>
+
+        </body>
+        </html>
         `
     };
 
@@ -135,5 +109,5 @@ const sendRegistrationInvitation = async ({
 };
 
 module.exports = {
-    sendRegistrationInvitation
+    sendInvitationEmail
 };

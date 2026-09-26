@@ -1,0 +1,418 @@
+:root {
+  /* Color — drawn from the site itself: overburden soil, chalk, moss regrowth, clay, oxide */
+  --color-bg: #dedbd1;
+  --color-surface: #faf9f5;
+  --color-ink: #262521;
+  --color-ink-soft: #55524a;
+  --color-border: #b8b2a2;
+  --color-accent: #4c6b4f;
+  --color-accent-soft: #dce4dc;
+  --color-ochre: #b6742a;
+  --color-ochre-soft: #f0e2cd;
+  --color-oxide: #9c3b2e;
+  --color-oxide-soft: #f1dcd8;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: var(--font-body);
+}
+
+/* --- Layout shell --- */
+
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+
+.navbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 28px 24px 20px;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.navbar .wordmark {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-ink);
+}
+
+.navbar .signin {
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-ink);
+  padding-bottom: 2px;
+}
+
+/* --- Hero map --- */
+
+.hero-map {
+  height: 420px;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  margin-bottom: 40px;
+}
+
+.hero-map .leaflet-container {
+  height: 100%;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+/* --- Ledger (registry-style table, not cards) --- */
+
+.ledger-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ledger-heading h2 {
+  font-size: 1.4rem;
+}
+
+.ledger-count {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-ink-soft);
+}
+
+.ledger {
+  border-top: 1px solid var(--color-ink);
+}
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.6fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 4px;
+  border-bottom: 1px solid var(--color-border);
+  text-decoration: none;
+  color: inherit;
+}
+
+.ledger-row:hover {
+  background: var(--color-surface);
+}
+
+.ledger-row .name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.ledger-row .meta {
+  color: var(--color-ink-soft);
+  font-size: 0.9rem;
+}
+
+.ledger-row .reg {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-ink-soft);
+}
+
+/* --- Status pill (used inline in ledger rows) --- */
+
+.status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+
+.status-active {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.status-monitoring {
+  color: var(--color-ochre);
+  background: var(--color-ochre-soft);
+}
+
+.status-completed {
+  color: var(--color-ink-soft);
+  background: var(--color-surface);
+}
+
+/* --- Stage tracker (rehabilitation activity status — a genuine sequence) --- */
+
+.stage-tracker {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 4px 0;
+}
+
+.stage-tracker .stage {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.stage-tracker .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+.stage-tracker .stage.done .dot {
+  background: var(--color-accent);
+}
+
+.stage-tracker .stage.current .dot {
+  background: var(--color-ochre);
+}
+
+.stage-tracker .stage.rejected .dot {
+  background: var(--color-oxide);
+}
+
+.stage-tracker .line {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+  margin: 0 4px;
+}
+
+.stage-tracker .stage.done + .stage .line,
+.stage-tracker .line.done {
+  background: var(--color-accent);
+}
+
+.stage-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--color-ink-soft);
+  margin-top: 4px;
+}
+
+/* --- Zone detail --- */
+
+.zone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 8px 0 28px;
+}
+
+.zone-header .back {
+  font-size: 0.85rem;
+  text-decoration: none;
+  color: var(--color-ink-soft);
+  display: block;
+  margin-bottom: 12px;
+}
+
+.zone-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  border: 1px solid var(--color-border);
+  padding: 20px;
+  margin-bottom: 32px;
+  background: var(--color-surface);
+}
+
+.zone-stats dt {
+  font-size: 0.78rem;
+  color: var(--color-ink-soft);
+  margin-bottom: 4px;
+}
+
+.zone-stats dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.activity-row {
+  display: grid;
+  grid-template-columns: 100px 1.2fr 1fr 1fr;
+  gap: 16px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.9rem;
+}
+
+.activity-row .date {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--color-ink-soft);
+}
+
+.empty-state {
+  padding: 40px 0;
+  color: var(--color-ink-soft);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* --- Login (split screen) --- */
+
+.login-screen {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+}
+
+.login-visual {
+  background: var(--color-accent);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-visual svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.35;
+}
+
+.login-visual .caption {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  right: 32px;
+  color: var(--color-surface);
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  max-width: 340px;
+}
+
+.login-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 340px;
+}
+
+.login-form h1 {
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.login-form p.sub {
+  color: var(--color-ink-soft);
+  margin: 0 0 28px;
+  font-size: 0.92rem;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+  color: var(--color-ink-soft);
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--color-ink);
+}
+
+.field input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.login-submit {
+  width: 100%;
+  padding: 11px;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.login-submit:hover {
+  background: var(--color-accent);
+}
+
+.login-error {
+  background: var(--color-oxide-soft);
+  color: var(--color-oxide);
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 800px) {
+  .login-screen {
+    grid-template-columns: 1fr;
+  }
+  .login-visual {
+    display: none;
+  }
+  .zone-stats {
+    grid-template-columns: 1fr;
+  }
+  .ledger-row,
+  .activity-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
