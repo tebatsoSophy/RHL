@@ -180,6 +180,16 @@ button {
   background: var(--color-surface);
 }
 
+.status-rejected {
+  color: var(--color-oxide);
+  background: var(--color-oxide-soft);
+}
+
+textarea,
+select {
+  font-family: var(--font-body);
+}
+
 /* --- Stage tracker (rehabilitation activity status — a genuine sequence) --- */
 
 .stage-tracker {

@@ -17,7 +17,15 @@ export default function Login() {
       const result = await api.login(email, password);
       // Adjust to match your actual backend's response shape
       localStorage.setItem("rehabledger_token", result.token);
-      navigate("/dashboard");
+      localStorage.setItem("rehabledger_user", JSON.stringify(result.user));
+
+      if (result.user?.role === "WORKER") {
+        navigate("/worker/dashboard");
+      } else if (result.user?.role === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError(err.message || "Sign in failed");
     } finally {
