@@ -12,11 +12,19 @@ const requireAdmin =
 
 const router = express.Router();
 
+const authenticateToken = require("../middleware/authMiddleware");
+const requireAdmin = require("../middleware/adminMiddleware");
+
+const router = express.Router();
+
+
+// Admin sends invitation
 router.post(
     "/",
     authenticateToken,
     requireAdmin,
     createInvitation
 );
+
 
 module.exports = router;
