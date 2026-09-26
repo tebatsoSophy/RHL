@@ -12,18 +12,47 @@ const {
 // CREATE INVITATION
 // ============================================================
 
+
+const { sendRegistrationInvitation } = require("../services/emailService");
+
+// ==========================================
+// ADMIN: SEND USER INVITATION
+// ==========================================
 const createInvitation = async (req, res) => {
     try {
+        const {
+            name,
+            email,
+            role,
+            mineId
+        } = req.body;
+
+        // ------------------------------------------
+        // Validate required fields
+        // ------------------------------------------
+        if (!name || !email || !role) {
+            return res.status(400).json({
+                message: "Name, email and role are required"
+            });
+        }
 
         const {
             email,
             companyId,
             zoneId
         } = req.body;
+        // ------------------------------------------
+        // Validate role
+        // ------------------------------------------
+        const allowedRoles = [
+            "MINE",
+            "SPECIALIST",
+            "REGULATOR"
+        ];
 
-        if (!email || !companyId || !zoneId) {
+        if (!allowedRoles.includes(role)) {
             return res.status(400).json({
-                message: "Email, company and zone are required"
+                message: "Invalid role"
             });
         }
 
@@ -93,11 +122,68 @@ const createInvitation = async (req, res) => {
             SELECT id
             FROM users
             WHERE email = $1
+        // ------------------------------------------
+        // Check if account already exists
+        // ------------------------------------------
+        const existingUser = await pool.query(
+            `
+            SELECT id
+            FROM users
+            WHERE email = $1
             `,
             [normalizedEmail]
         );
 
         if (existingUser.rows.length > 0) {
+            return res.status(409).json({
+                message: "An account with this email already exists"
+            });
+        }
+
+        // ------------------------------------------
+        // Mine required for MINE users
+        // ------------------------------------------
+        if (role === "MINE" && !mineId) {
+            return res.status(400).json({
+                message: "A mine is required for MINE users"
+            });
+        }
+
+        // ------------------------------------------
+        // Validate mine
+        // ------------------------------------------
+        if (mineId) {
+            const mineResult = await pool.query(
+                `
+                SELECT id, name
+                FROM mines
+                WHERE id = $1
+                `,
+                [mineId]
+            );
+
+            if (mineResult.rows.length === 0) {
+                return res.status(404).json({
+                    message: "Mine not found"
+                });
+            }
+        }
+
+        // ------------------------------------------
+        // Check for existing active invitation
+        // ------------------------------------------
+        const existingInvitation = await pool.query(
+            `
+            SELECT id
+            FROM invitations
+            WHERE email = $1
+              AND status = 'PENDING'
+              AND token_expires_at > CURRENT_TIMESTAMP
+            `,
+            [normalizedEmail]
+        );
+
+        if (existingInvitation.rows.length > 0) {
             return res.status(409).json({
                 message:
                     "A user with this email already exists"
@@ -109,11 +195,18 @@ const createInvitation = async (req, res) => {
         // Generate invitation token
         // ----------------------------------------------------
 
+                message: "An active invitation already exists for this email"
+            });
+        }
+
+        // ------------------------------------------
+        // Generate secure invitation token
+        // ------------------------------------------
         const rawToken = crypto
             .randomBytes(32)
             .toString("hex");
 
-        const tokenHash = crypto
+        const hashedToken = crypto
             .createHash("sha256")
             .update(rawToken)
             .digest("hex");
@@ -134,8 +227,22 @@ const createInvitation = async (req, res) => {
         // ----------------------------------------------------
         // Expire after 24 hours
         // ----------------------------------------------------
+        // ------------------------------------------
+        // Generate 6-digit OTP
+        // ------------------------------------------
+        const otp = crypto
+            .randomInt(100000, 1000000)
+            .toString();
 
-        const expiresAt = new Date(
+        const otpHash = await bcrypt.hash(
+            otp,
+            10
+        );
+
+        // ------------------------------------------
+        // Invitation expires in 24 hours
+        // ------------------------------------------
+        const tokenExpiresAt = new Date(
             Date.now() + 24 * 60 * 60 * 1000
         );
 
@@ -144,19 +251,21 @@ const createInvitation = async (req, res) => {
         // Save invitation
         // ----------------------------------------------------
 
+        // ------------------------------------------
+        // Store invitation
+        // ------------------------------------------
         const result = await pool.query(
             `
             INSERT INTO invitations
             (
+                name,
                 email,
                 role,
                 mine_id,
-                company_id,
-                zone_id,
-                invited_by,
-                invitation_token_hash,
+                invitation_token,
                 otp_hash,
-                expires_at
+                token_expires_at,
+                status
             )
             VALUES
             (
@@ -175,16 +284,26 @@ const createInvitation = async (req, res) => {
                 email,
                 zone_id,
                 expires_at
+                'PENDING'
+            )
+            RETURNING
+                id,
+                name,
+                email,
+                role,
+                mine_id,
+                status,
+                token_expires_at,
+                created_at
             `,
             [
+                name.trim(),
                 normalizedEmail,
-                req.user.mineId,
-                companyId,
-                zoneId,
-                req.user.userId,
-                tokenHash,
+                role,
+                mineId || null,
+                hashedToken,
                 otpHash,
-                expiresAt
+                tokenExpiresAt
             ]
         );
 
@@ -193,8 +312,11 @@ const createInvitation = async (req, res) => {
         // Build invitation link
         // ----------------------------------------------------
 
+        // ------------------------------------------
+        // Create invitation link
+        // ------------------------------------------
         const invitationLink =
-            `${process.env.FRONTEND_URL}/accept-invitation?token=${rawToken}`;
+            `${process.env.FRONTEND_URL}/complete-registration?token=${rawToken}`;
 
 
         // ----------------------------------------------------
@@ -202,28 +324,33 @@ const createInvitation = async (req, res) => {
         // ----------------------------------------------------
 
         await sendInvitationEmail({
+        // ------------------------------------------
+        // Send invitation email
+        // ------------------------------------------
+        await sendRegistrationInvitation({
+            name: name.trim(),
             email: normalizedEmail,
             invitationLink,
-            otp,
-            mineName: zone.mine_name,
-            zoneName: zone.name
+            otp
         });
 
 
+        // ------------------------------------------
+        // Response
+        // ------------------------------------------
         return res.status(201).json({
             message: "Invitation sent successfully",
             invitation: result.rows[0]
         });
 
     } catch (error) {
-
         console.error(
             "Create invitation error:",
             error
         );
 
         return res.status(500).json({
-            message: "Server error"
+            message: "Failed to send invitation"
         });
     }
 };

@@ -10,14 +10,18 @@ const {
 const authenticateToken =
     require("../middleware/authMiddleware");
 
-const requireAdmin =
+const { requireAdmin } =
     require("../middleware/adminMiddleware");
+
+
+
 
 const router = express.Router();
 
 
 // ADMIN
 // Send invitation
+// Admin sends invitation
 router.post(
     "/",
     authenticateToken,
