@@ -7,13 +7,11 @@ const {
 const authenticateToken =
     require("../middleware/authMiddleware");
 
-const requireAdmin =
+const { requireAdmin } =
     require("../middleware/adminMiddleware");
 
-const router = express.Router();
 
-const authenticateToken = require("../middleware/authMiddleware");
-const requireAdmin = require("../middleware/adminMiddleware");
+
 
 const router = express.Router();
 
