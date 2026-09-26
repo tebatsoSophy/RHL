@@ -25,10 +25,41 @@ export const api = {
   getPublicZones: () => request("/public/zones"),
   getPublicZoneActivities: (zoneId) => request(`/public/zones/${zoneId}/activities`),
 
+  // Authenticated — general zones list (used by Admin to pick a zone for an invite)
+  getAllZones: () => request("/zones"),
+
   // Auth — adjust the path/shape to match your actual login route
   login: (email, password) =>
     request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
+    }),
+
+  // Invitations
+  verifyInvitation: (token) =>
+    request(`/invitations/verify?token=${encodeURIComponent(token)}`),
+
+  acceptInvitation: ({ token, otp, name, password }) =>
+    request("/invitations/accept", {
+      method: "POST",
+      body: JSON.stringify({ token, otp, name, password }),
+    }),
+
+  // Worker
+  getMyZones: () => request("/workers/zones"),
+  getZoneActivities: (zoneId) => request(`/activities/zone/${zoneId}`),
+  createActivity: ({ zoneId, activityType, description, measurement, unit, activityDate }) =>
+    request("/activities", {
+      method: "POST",
+      body: JSON.stringify({ zoneId, activityType, description, measurement, unit, activityDate }),
+    }),
+
+  // Admin
+  getCompanies: () => request("/companies"),
+  getInvitations: () => request("/invitations"),
+  createInvitation: ({ email, companyId, zoneId }) =>
+    request("/invitations", {
+      method: "POST",
+      body: JSON.stringify({ email, companyId, zoneId }),
     }),
 };
