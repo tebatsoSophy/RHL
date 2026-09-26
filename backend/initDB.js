@@ -66,6 +66,20 @@ CREATE TABLE IF NOT EXISTS reviews (
     comments TEXT,
     reviewed_at TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS registration_requests (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    requested_role VARCHAR(50) NOT NULL,
+    requested_mine_id INTEGER REFERENCES mines(id) ON DELETE SET NULL,
+    reason TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    approval_token VARCHAR(255),
+    token_expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at TIMESTAMP
+);
 `;
 
 async function initializeDatabase() {
