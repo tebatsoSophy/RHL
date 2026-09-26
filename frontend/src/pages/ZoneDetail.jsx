@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api";
 import ZonesMap from "../components/ZonesMap";
-import StatusTracker from "../components/StatusTracker";
 import { zoneStatusClass } from "../statusHelpers";
 
 export default function ZoneDetail() {
@@ -77,34 +76,27 @@ export default function ZoneDetail() {
 
       <div>
         {activities.map((activity) => (
-          <div key={activity.id}>
-            <div className="activity-row">
-              <span className="date">{activity.activity_date}</span>
-              <span>
-                <strong>{activity.activity_type}</strong>
-                {activity.description && (
-                  <div style={{ color: "var(--color-ink-soft)", fontSize: "0.85rem" }}>
-                    {activity.description}
-                  </div>
-                )}
-              </span>
-              <span>
-                {activity.measurement != null
-                  ? `${activity.measurement} ${activity.unit || ""}`
-                  : "—"}
-              </span>
-              <span style={{ color: "var(--color-ink-soft)" }}>
-                {activity.performed_by_name || "—"}
-                {activity.performed_by_role && (
-                  <div style={{ fontSize: "0.78rem" }}>
-                    {activity.performed_by_role.replace(/_/g, " ").toLowerCase()}
-                  </div>
-                )}
-              </span>
-            </div>
-            <div style={{ padding: "0 4px 18px" }}>
-              <StatusTracker status={activity.status} />
-            </div>
+          <div key={activity.id} className="activity-row">
+            <span className="date">{activity.activity_date}</span>
+            <span>
+              <strong>{activity.activity_type}</strong>
+              {activity.description && (
+                <div style={{ color: "var(--color-ink-soft)", fontSize: "0.85rem" }}>
+                  {activity.description}
+                </div>
+              )}
+            </span>
+            <span>
+              {activity.measurement != null
+                ? `${activity.measurement} ${activity.unit || ""}`
+                : "—"}
+            </span>
+            <span style={{ color: "var(--color-ink-soft)" }}>
+              {activity.performed_by_name || "—"}
+              {activity.performed_by_company && (
+                <div style={{ fontSize: "0.78rem" }}>{activity.performed_by_company}</div>
+              )}
+            </span>
           </div>
         ))}
         {activities.length === 0 && (

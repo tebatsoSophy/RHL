@@ -38,3 +38,16 @@ export function activityStageIndex(status) {
   if (status === "REJECTED") return -1;
   return ACTIVITY_STAGES.indexOf(status);
 }
+
+export function activityStatusClass(status) {
+  switch (status) {
+    case "APPROVED":
+      return "status-active";
+    case "COMPLETED":
+      return "status-completed";
+    case "REJECTED":
+      return "status-rejected";
+    default: // PENDING, IN_PROGRESS, SUBMITTED, UNDER_REVIEW
+      return "status-monitoring";
+  }
+}
