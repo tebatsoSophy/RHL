@@ -8,11 +8,13 @@ const userRoutes = require("./routes/userRoutes");
 const invitationRoutes = require("./routes/invitationRoutes");
 
 const app = express();
+const publicRoutes = require("./routes/publicRoutes");
 const mineRoutes = require("./routes/mineRoutes");
 const zoneRoutes = require("./routes/zoneRoutes");
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/public", publicRoutes);
 app.use("/api/mines", mineRoutes);
 app.use("/api/zones", zoneRoutes);
 
