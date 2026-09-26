@@ -14,13 +14,24 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(150) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role VARCHAR(50) NOT NULL DEFAULT 'MINE',
+
+    role VARCHAR(50) NOT NULL,
+
+    company_id INTEGER REFERENCES companies(id) ON DELETE SET NULL,
     mine_id INTEGER REFERENCES mines(id) ON DELETE CASCADE,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-
     CONSTRAINT valid_role
-        CHECK (role IN ('ADMIN', 'MINE', 'SPECIALIST', 'REGULATOR'))
+        CHECK (role IN ('ADMIN', 'WORKER', 'SPECIALIST', 'REGULATOR'))
+);
+
+CREATE TABLE IF NOT EXISTS companies (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    registration_number VARCHAR(100) UNIQUE,
+    company_type VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS rehabilitation_zones (
@@ -36,15 +47,37 @@ CREATE TABLE IF NOT EXISTS rehabilitation_zones (
 
 CREATE TABLE IF NOT EXISTS rehabilitation_activities (
     id SERIAL PRIMARY KEY,
-    zone_id INTEGER NOT NULL REFERENCES rehabilitation_zones(id) ON DELETE CASCADE,
+
+    zone_id INTEGER NOT NULL
+        REFERENCES rehabilitation_zones(id) ON DELETE CASCADE,
+
     activity_type VARCHAR(100) NOT NULL,
+
     description TEXT,
+
     measurement DECIMAL(12,2),
+
     unit VARCHAR(50),
-    performed_by VARCHAR(150),
+
+    performed_by INTEGER
+        REFERENCES users(id) ON DELETE SET NULL,
+
     activity_date DATE NOT NULL,
+
     status VARCHAR(50) DEFAULT 'PENDING',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT valid_activity_status
+        CHECK (status IN (
+            'PENDING',
+            'IN_PROGRESS',
+            'SUBMITTED',
+            'UNDER_REVIEW',
+            'APPROVED',
+            'REJECTED',
+            'COMPLETED'
+        ))
 );
 
 CREATE TABLE IF NOT EXISTS evidence (
