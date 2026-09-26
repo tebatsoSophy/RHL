@@ -1,7 +1,10 @@
 const express = require("express");
 
 const {
-    createInvitation
+    createInvitation,
+    verifyInvitation,
+    acceptInvitation,
+    getMyInvitations
 } = require("../controllers/invitationController");
 
 const authenticateToken =
@@ -12,11 +15,37 @@ const requireAdmin =
 
 const router = express.Router();
 
+
+// ADMIN
+// Send invitation
 router.post(
     "/",
     authenticateToken,
     requireAdmin,
     createInvitation
 );
+
+router.get(
+    "/",
+    authenticateToken,
+    requireAdmin,
+    getMyInvitations
+);
+
+// PUBLIC
+// Worker opens invitation link
+router.get(
+    "/verify",
+    verifyInvitation
+);
+
+
+// PUBLIC
+// Worker accepts invitation
+router.post(
+    "/accept",
+    acceptInvitation
+);
+
 
 module.exports = router;

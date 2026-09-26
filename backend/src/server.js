@@ -6,17 +6,24 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const invitationRoutes = require("./routes/invitationRoutes");
+const workerRoutes = require("./routes/workerRoutes");
+const companyRoutes = require("./routes/companyRoutes");
+const activityRoutes = require("./routes/activityRoutes");
 
 const app = express();
 const publicRoutes = require("./routes/publicRoutes");
 const mineRoutes = require("./routes/mineRoutes");
 const zoneRoutes = require("./routes/zoneRoutes");
 
+
 app.use(cors());
 app.use(express.json());
 app.use("/api/public", publicRoutes);
 app.use("/api/mines", mineRoutes);
 app.use("/api/zones", zoneRoutes);
+app.use("/api/workers", workerRoutes);
+app.use("/api/companies", companyRoutes);
+app.use("/api/activities", activityRoutes);
 
 
 app.get("/", (req, res) => {
