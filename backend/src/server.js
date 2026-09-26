@@ -3,10 +3,14 @@ const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
+const mineRoutes = require("./routes/mineRoutes");
+const zoneRoutes = require("./routes/zoneRoutes");
 
 app.use(cors());
 app.use(express.json());
-
+app.use("/api/mines", mineRoutes);
+app.use("/api/zones", zoneRoutes);
+    
 app.get("/", (req, res) => {
     res.json({
         message: "RehabLedger API is running"
