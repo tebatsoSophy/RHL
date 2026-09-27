@@ -5,12 +5,29 @@ const cors = require("cors");
 
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
-const registrationRoutes = require("./routes/registrationRoutes");
+const invitationRoutes = require("./routes/invitationRoutes");
+const workerRoutes = require("./routes/workerRoutes");
+const companyRoutes = require("./routes/companyRoutes");
+const activityRoutes = require("./routes/activityRoutes");
 
 const app = express();
+const publicRoutes = require("./routes/publicRoutes");
+const mineRoutes = require("./routes/mineRoutes");
+const zoneRoutes = require("./routes/zoneRoutes");
+const evidenceRoutes = require("./routes/evidenceRoutes");
+const reviewerRoutes = require("./routes/reviewerRoutes");
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/public", publicRoutes);
+app.use("/api/mines", mineRoutes);
+app.use("/api/zones", zoneRoutes);
+app.use("/api/workers", workerRoutes);
+app.use("/api/companies", companyRoutes);
+app.use("/api/activities", activityRoutes);
+app.use("/api/evidence", evidenceRoutes);
+app.use("/api/reviewers", reviewerRoutes);
+
 
 app.get("/", (req, res) => {
     res.json({
@@ -20,7 +37,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/registration-requests", registrationRoutes);
+app.use("/api/invitations", invitationRoutes);
 
 const PORT = process.env.PORT || 5000;
 
