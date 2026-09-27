@@ -254,7 +254,7 @@ CREATE TABLE IF NOT EXISTS invitations (
         DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT valid_invitation_role
-        CHECK (role IN ('WORKER')),
+        CHECK (role IN ('WORKER', 'SPECIALIST', 'REGULATOR')),
 
     CONSTRAINT valid_invitation_status
         CHECK (

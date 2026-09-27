@@ -12,18 +12,35 @@ const {
 // CREATE INVITATION
 // ============================================================
 
+const VALID_INVITE_ROLES = ["WORKER", "SPECIALIST", "REGULATOR"];
+
 const createInvitation = async (req, res) => {
     try {
 
         const {
             email,
             companyId,
-            zoneId
+            zoneId,
+            role
         } = req.body;
 
-        if (!email || !companyId || !zoneId) {
+        if (!email || !zoneId || !role) {
             return res.status(400).json({
-                message: "Email, company and zone are required"
+                message: "Email, zone, and role are required"
+            });
+        }
+
+        if (!VALID_INVITE_ROLES.includes(role)) {
+            return res.status(400).json({
+                message: `Role must be one of: ${VALID_INVITE_ROLES.join(", ")}`
+            });
+        }
+
+        // Company is required for Worker/Specialist (they're contractor staff),
+        // optional for Regulator (often a government body, not tied to a company)
+        if (role !== "REGULATOR" && !companyId) {
+            return res.status(400).json({
+                message: "Company is required for this role"
             });
         }
 
@@ -65,22 +82,20 @@ const createInvitation = async (req, res) => {
 
 
         // ----------------------------------------------------
-        // Verify company
+        // Verify company (only if one was provided)
         // ----------------------------------------------------
 
-        const companyResult = await pool.query(
-            `
-            SELECT id, name
-            FROM companies
-            WHERE id = $1
-            `,
-            [companyId]
-        );
+        if (companyId) {
+            const companyResult = await pool.query(
+                `SELECT id, name FROM companies WHERE id = $1`,
+                [companyId]
+            );
 
-        if (companyResult.rows.length === 0) {
-            return res.status(404).json({
-                message: "Company not found"
-            });
+            if (companyResult.rows.length === 0) {
+                return res.status(404).json({
+                    message: "Company not found"
+                });
+            }
         }
 
 
@@ -89,18 +104,13 @@ const createInvitation = async (req, res) => {
         // ----------------------------------------------------
 
         const existingUser = await pool.query(
-            `
-            SELECT id
-            FROM users
-            WHERE email = $1
-            `,
+            `SELECT id FROM users WHERE email = $1`,
             [normalizedEmail]
         );
 
         if (existingUser.rows.length > 0) {
             return res.status(409).json({
-                message:
-                    "A user with this email already exists"
+                message: "A user with this email already exists"
             });
         }
 
@@ -109,35 +119,23 @@ const createInvitation = async (req, res) => {
         // Generate invitation token
         // ----------------------------------------------------
 
-        const rawToken = crypto
-            .randomBytes(32)
-            .toString("hex");
-
-        const tokenHash = crypto
-            .createHash("sha256")
-            .update(rawToken)
-            .digest("hex");
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
 
 
         // ----------------------------------------------------
         // Generate 6 digit OTP
         // ----------------------------------------------------
 
-        const otp = crypto
-            .randomInt(100000, 1000000)
-            .toString();
-
-        const otpHash =
-            await bcrypt.hash(otp, 12);
+        const otp = crypto.randomInt(100000, 1000000).toString();
+        const otpHash = await bcrypt.hash(otp, 12);
 
 
         // ----------------------------------------------------
         // Expire after 24 hours
         // ----------------------------------------------------
 
-        const expiresAt = new Date(
-            Date.now() + 24 * 60 * 60 * 1000
-        );
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
 
         // ----------------------------------------------------
@@ -148,38 +146,17 @@ const createInvitation = async (req, res) => {
             `
             INSERT INTO invitations
             (
-                email,
-                role,
-                mine_id,
-                company_id,
-                zone_id,
-                invited_by,
-                invitation_token_hash,
-                otp_hash,
-                expires_at
+                email, role, mine_id, company_id, zone_id,
+                invited_by, invitation_token_hash, otp_hash, expires_at
             )
-            VALUES
-            (
-                $1,
-                'WORKER',
-                $2,
-                $3,
-                $4,
-                $5,
-                $6,
-                $7,
-                $8
-            )
-            RETURNING
-                id,
-                email,
-                zone_id,
-                expires_at
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id, email, role, zone_id, expires_at
             `,
             [
                 normalizedEmail,
+                role,
                 req.user.mineId,
-                companyId,
+                companyId || null,
                 zoneId,
                 req.user.userId,
                 tokenHash,
@@ -189,17 +166,8 @@ const createInvitation = async (req, res) => {
         );
 
 
-        // ----------------------------------------------------
-        // Build invitation link
-        // ----------------------------------------------------
-
         const invitationLink =
             `${process.env.FRONTEND_URL}/accept-invitation?token=${rawToken}`;
-
-
-        // ----------------------------------------------------
-        // Send email
-        // ----------------------------------------------------
 
         await sendInvitationEmail({
             email: normalizedEmail,
@@ -216,18 +184,10 @@ const createInvitation = async (req, res) => {
         });
 
     } catch (error) {
-
-        console.error(
-            "Create invitation error:",
-            error
-        );
-
-        return res.status(500).json({
-            message: "Server error"
-        });
+        console.error("Create invitation error:", error);
+        return res.status(500).json({ message: "Server error" });
     }
 };
-
 
 // ============================================================
 // VERIFY INVITATION
@@ -577,8 +537,8 @@ const acceptInvitation = async (req, res) => {
                     $1,
                     $2,
                     $3,
-                    'WORKER',
-                    $4
+                    $5,
+                    $5
                 )
                 RETURNING
                     id,
@@ -591,6 +551,7 @@ const acceptInvitation = async (req, res) => {
                     name.trim(),
                     invitation.email,
                     passwordHash,
+                    invitation.role,
                     invitation.company_id
                 ]
             );
@@ -716,7 +677,7 @@ const getMyInvitations = async (req, res) => {
         const result = await pool.query(
             `
             SELECT
-                i.id, i.email, i.status, i.expires_at, i.created_at,
+                i.id, i.email, i.role, i.status, i.expires_at, i.created_at,
                 rz.name AS zone_name,
                 c.name AS company_name
             FROM invitations i
