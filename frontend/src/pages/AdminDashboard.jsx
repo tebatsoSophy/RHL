@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
 
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState("WORKER");
   const [companyId, setCompanyId] = useState("");
   const [zoneId, setZoneId] = useState("");
   const [formError, setFormError] = useState(null);
@@ -49,9 +50,10 @@ export default function AdminDashboard() {
     setFormSuccess(null);
     setSubmitting(true);
     try {
-      await api.createInvitation({ email, companyId, zoneId });
+      await api.createInvitation({ email, companyId: companyId || null, zoneId, role });
       setFormSuccess(`Invitation sent to ${email}.`);
       setEmail("");
+      setRole("WORKER");
       setCompanyId("");
       setZoneId("");
       loadData(); // refresh the invitations ledger
@@ -144,11 +146,11 @@ export default function AdminDashboard() {
           </div>
 
           <div className="field">
-            <label htmlFor="company">Company</label>
+            <label htmlFor="role">Role</label>
             <select
-              id="company"
-              value={companyId}
-              onChange={(e) => setCompanyId(e.target.value)}
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
               required
               style={{
                 width: "100%",
@@ -159,7 +161,33 @@ export default function AdminDashboard() {
                 fontSize: "0.95rem",
               }}
             >
-              <option value="">Select a company…</option>
+              <option value="WORKER">Worker</option>
+              <option value="SPECIALIST">Specialist</option>
+              <option value="REGULATOR">Regulator</option>
+            </select>
+          </div>
+
+          <div className="field">
+            <label htmlFor="company">
+              Company {role === "REGULATOR" && "(optional)"}
+            </label>
+            <select
+              id="company"
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              required={role !== "REGULATOR"}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface)",
+                fontFamily: "var(--font-body)",
+                fontSize: "0.95rem",
+              }}
+            >
+              <option value="">
+                {role === "REGULATOR" ? "None (government body)" : "Select a company…"}
+              </option>
               {companies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name} ({c.company_type?.replace(/_/g, " ").toLowerCase()})
@@ -207,10 +235,11 @@ export default function AdminDashboard() {
 
       <div className="ledger">
         {invitations.map((inv) => (
-          <div key={inv.id} className="ledger-row" style={{ gridTemplateColumns: "1.4fr 1fr 1fr auto" }}>
+          <div key={inv.id} className="ledger-row" style={{ gridTemplateColumns: "1.3fr 0.8fr 1fr 1fr auto" }}>
             <span className="name" style={{ fontSize: "0.95rem" }}>
               {inv.email}
             </span>
+            <span className="meta">{inv.role?.toLowerCase()}</span>
             <span className="meta">{inv.zone_name}</span>
             <span className="meta">{inv.company_name || "—"}</span>
             <span className={`status-pill ${inviteStatusClass(inv.status)}`}>

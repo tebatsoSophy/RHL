@@ -7,6 +7,7 @@ import AcceptInvitation from "./pages/AcceptInvitation";
 import WorkerDashboard from "./pages/WorkerDashboard";
 import WorkerZoneActivities from "./pages/WorkerZoneActivities";
 import AdminDashboard from "./pages/AdminDashboard";
+import ReviewerDashboard from "./pages/ReviewerDashboard";
 
 export default function App() {
   const location = useLocation();
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/worker/dashboard" element={<WorkerDashboard />} />
         <Route path="/worker/zones/:zoneId" element={<WorkerZoneActivities />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/reviewer/dashboard" element={<ReviewerDashboard />} />
       </Routes>
     </>
   );

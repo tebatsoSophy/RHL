@@ -38,7 +38,12 @@ export default function AcceptInvitation() {
       const result = await api.acceptInvitation({ token, otp, name, password });
       localStorage.setItem("rehabledger_token", result.token);
       localStorage.setItem("rehabledger_user", JSON.stringify(result.user));
-      navigate("/worker/dashboard");
+
+      if (["SPECIALIST", "REGULATOR"].includes(result.user?.role)) {
+        navigate("/reviewer/dashboard");
+      } else {
+        navigate("/worker/dashboard");
+      }
     } catch (err) {
       setSubmitError(err.message || "Could not create your account");
     } finally {

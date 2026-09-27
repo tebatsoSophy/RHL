@@ -23,6 +23,8 @@ export default function Login() {
         navigate("/worker/dashboard");
       } else if (result.user?.role === "ADMIN") {
         navigate("/admin/dashboard");
+      } else if (["SPECIALIST", "REGULATOR"].includes(result.user?.role)) {
+        navigate("/reviewer/dashboard");
       } else {
         navigate("/dashboard");
       }

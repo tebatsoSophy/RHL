@@ -198,6 +198,7 @@ export default function WorkerZoneActivities() {
             </div>
             <div style={{ padding: "0 4px 18px" }}>
               <StatusTracker status={activity.status} />
+              <EvidencePanel activityId={activity.id} />
             </div>
           </div>
         ))}
@@ -205,6 +206,179 @@ export default function WorkerZoneActivities() {
           <div className="empty-state">No activities logged for this zone yet.</div>
         )}
       </div>
+    </div>
+  );
+}
+
+function EvidencePanel({ activityId }) {
+  const [open, setOpen] = useState(false);
+  const [evidence, setEvidence] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [verifyResults, setVerifyResults] = useState({}); // evidenceId -> { matches, ... }
+  const [verifying, setVerifying] = useState(null);
+
+  function load() {
+    setLoading(true);
+    api
+      .getActivityEvidence(activityId)
+      .then(setEvidence)
+      .catch((err) => setUploadError(err.message))
+      .finally(() => setLoading(false));
+  }
+
+  function toggle() {
+    if (!open) load();
+    setOpen(!open);
+  }
+
+  async function handleFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      await api.uploadEvidence(activityId, file);
+      load();
+    } catch (err) {
+      setUploadError(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+      e.target.value = ""; // allow re-selecting the same file
+    }
+  }
+
+  async function handleVerify(evidenceId) {
+    setVerifying(evidenceId);
+    try {
+      const result = await api.verifyEvidence(evidenceId);
+      setVerifyResults((prev) => ({ ...prev, [evidenceId]: result }));
+    } catch (err) {
+      setVerifyResults((prev) => ({
+        ...prev,
+        [evidenceId]: { error: err.message },
+      }));
+    } finally {
+      setVerifying(null);
+    }
+  }
+
+  return (
+    <div style={{ marginTop: 4 }}>
+      <button
+        onClick={toggle}
+        style={{
+          background: "none",
+          border: "none",
+          padding: 0,
+          color: "var(--color-accent)",
+          fontSize: "0.82rem",
+          cursor: "pointer",
+          textDecoration: "underline",
+        }}
+      >
+        {open ? "Hide evidence" : "View / add evidence"}
+      </button>
+
+      {open && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: 14,
+            border: "1px solid var(--color-border)",
+            background: "var(--color-surface)",
+          }}
+        >
+          <div style={{ marginBottom: 12 }}>
+            <label
+              style={{
+                display: "inline-block",
+                fontSize: "0.82rem",
+                marginBottom: 6,
+                color: "var(--color-ink-soft)",
+              }}
+            >
+              Upload a report, photo, or CSV (max 15MB)
+            </label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,application/pdf,text/csv"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+            {uploading && <p style={{ fontSize: "0.82rem" }}>Uploading…</p>}
+            {uploadError && <p style={{ fontSize: "0.82rem", color: "var(--color-oxide)" }}>{uploadError}</p>}
+          </div>
+
+          {loading ? (
+            <p style={{ fontSize: "0.85rem" }}>Loading evidence…</p>
+          ) : evidence.length === 0 ? (
+            <p style={{ fontSize: "0.85rem", color: "var(--color-ink-soft)" }}>
+              No evidence uploaded yet.
+            </p>
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {evidence.map((item) => {
+                const result = verifyResults[item.id];
+                return (
+                  <li
+                    key={item.id}
+                    style={{
+                      padding: "8px 0",
+                      borderBottom: "1px solid var(--color-border)",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                      <span>
+                        {item.signed_url ? (
+                          <a href={item.signed_url} target="_blank" rel="noreferrer">
+                            {item.file_name}
+                          </a>
+                        ) : (
+                          item.file_name
+                        )}
+                      </span>
+                      <button
+                        onClick={() => handleVerify(item.id)}
+                        disabled={verifying === item.id}
+                        style={{
+                          background: "none",
+                          border: "1px solid var(--color-border)",
+                          padding: "3px 8px",
+                          fontSize: "0.75rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {verifying === item.id ? "Checking…" : "Verify integrity"}
+                      </button>
+                    </div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", color: "var(--color-ink-soft)" }}>
+                      sha256: {item.sha256_hash.slice(0, 16)}…
+                    </div>
+                    {result && (
+                      <div
+                        style={{
+                          marginTop: 4,
+                          color: result.matches ? "var(--color-accent)" : "var(--color-oxide)",
+                          fontSize: "0.78rem",
+                        }}
+                      >
+                        {result.error
+                          ? result.error
+                          : result.matches
+                          ? "✓ File matches the recorded hash — unaltered since upload."
+                          : "⚠ File does NOT match the recorded hash — possible tampering."}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }

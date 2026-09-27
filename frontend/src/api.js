@@ -54,12 +54,36 @@ export const api = {
       body: JSON.stringify({ zoneId, activityType, description, measurement, unit, activityDate }),
     }),
 
+  // Evidence — file uploads need their own request path (no JSON headers, browser sets the boundary)
+  uploadEvidence: async (activityId, file) => {
+    const token = localStorage.getItem("rehabledger_token");
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE}/evidence/${activityId}`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || `Upload failed (${res.status})`);
+    }
+    return res.json();
+  },
+  getActivityEvidence: (activityId) => request(`/evidence/${activityId}`),
+  verifyEvidence: (evidenceId) => request(`/evidence/verify/${evidenceId}`),
+
   // Admin
   getCompanies: () => request("/companies"),
   getInvitations: () => request("/invitations"),
-  createInvitation: ({ email, companyId, zoneId }) =>
+  createInvitation: ({ email, companyId, zoneId, role }) =>
     request("/invitations", {
       method: "POST",
-      body: JSON.stringify({ email, companyId, zoneId }),
+      body: JSON.stringify({ email, companyId, zoneId, role }),
     }),
+
+  // Reviewer (Specialist / Regulator)
+  getMyReviewZones: () => request("/reviewers/zones"),
 };
